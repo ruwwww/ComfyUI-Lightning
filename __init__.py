@@ -13,6 +13,9 @@ try:
     from .spargeattn.nodes import NODE_CLASS_MAPPINGS as spargeattn_NODE_CLASS_MAPPINGS
     NODE_CLASS_MAPPINGS.update(spargeattn_NODE_CLASS_MAPPINGS)
 
+    from .spargeattn.node_anima import NODE_CLASS_MAPPINGS as spargeattn_anima_NODE_CLASS_MAPPINGS
+    NODE_CLASS_MAPPINGS.update(spargeattn_anima_NODE_CLASS_MAPPINGS)
+
     # from .tomesd.nodes import NODE_CLASS_MAPPINGS as tomesd_NODE_CLASS_MAPPINGS
     # NODE_CLASS_MAPPINGS.update(tomesd_NODE_CLASS_MAPPINGS)
 
