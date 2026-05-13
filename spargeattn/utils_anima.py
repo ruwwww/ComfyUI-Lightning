@@ -73,6 +73,7 @@ def make_sparge_attn_op(spargeattn: SparseAttentionMeansim):
             v_B_S_H_D,
             mask=None,
             is_causal=False,
+            tensor_layout="NHD",
             tune_mode=tune_mode,
             return_sparsity=False,
         )
