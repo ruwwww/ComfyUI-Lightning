@@ -9,6 +9,7 @@ from spas_sage_attn.autotune import (
 
 def load_sparse_attention_state_dict(model, saved_state_dict, verbose=False):
     device = next(model.parameters()).device
+    loaded_count = 0
 
     for k, v in model.named_modules():
         if isinstance(
@@ -26,6 +27,15 @@ def load_sparse_attention_state_dict(model, saved_state_dict, verbose=False):
                     sub_name = sk.split(k)[1][1:]
                     sv = sv.to(device=device)
                     setattr(v, sub_name, nn.Parameter(sv, requires_grad=False))
+                    loaded_count += 1
+                    
+    if loaded_count == 0 and len(saved_state_dict) > 0:
+        raise ValueError(
+            "SpargeAttn failed to load any hyperparameter keys from the provided state dict. "
+            "This usually happens if you try to load hyperparameters generated for a different model architecture "
+            "(e.g., trying to use Flux hyperparameters on an Anima model). "
+            "Please run the tuning process specifically for this model architecture first."
+        )
     return model
 
 
@@ -44,6 +54,18 @@ def make_sparge_attn_op(spargeattn: SparseAttentionMeansim):
         v_B_S_H_D: Tensor,
         transformer_options=None,
     ) -> Tensor:
+        tune_mode = getattr(spargeattn, "enable_tuning_mode", False)
+        
+        if not tune_mode and spargeattn.cdfthreshd is None:
+            import os
+            if os.environ.get("TUNE_MODE", "") == "":
+                raise RuntimeError(
+                    "SpargeAttn error: 'attention hyperparameters should be tuned first'. "
+                    "You are running in inference mode but no valid tuned hyperparameters were loaded. "
+                    "Because Anima has a different architecture than Flux, you cannot use Flux hyperparameters. "
+                    "Please either check 'enable_tuning_mode' to tune the Anima model, or provide valid Anima 'tuned_hyperparams'."
+                )
+
         # SparseAttentionMeansim accepts NHD layout: (B, S, H, D)
         out = spargeattn(
             q_B_S_H_D,
@@ -51,7 +73,7 @@ def make_sparge_attn_op(spargeattn: SparseAttentionMeansim):
             v_B_S_H_D,
             mask=None,
             is_causal=False,
-            tune_mode=spargeattn.enable_tuning_mode,
+            tune_mode=tune_mode,
             return_sparsity=False,
         )
 
